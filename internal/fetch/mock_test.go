@@ -59,6 +59,21 @@ func TestMockClient_RecordsMultipleCalls(t *testing.T) {
 	}
 }
 
+// TestMockClient_ErrorTakesPrecedenceOverResponse verifies that when both an
+// error and a response are configured for the same URL, the error is returned.
+func TestMockClient_ErrorTakesPrecedenceOverResponse(t *testing.T) {
+	m := fetch.NewMockClient()
+	url := "http://svc-c/config"
+	expectedErr := errors.New("timeout")
+	m.Responses[url] = map[string]string{"KEY": "value"}
+	m.Errors[url] = expectedErr
+
+	_, err := m.FetchConfig(context.Background(), url)
+	if !errors.Is(err, expectedErr) {
+		t.Errorf("want error %v, got %v", expectedErr, err)
+	}
+}
+
 // Compile-time check that both types satisfy the interface.
 var _ fetch.ConfigFetcher = (*fetch.Client)(nil)
 var _ fetch.ConfigFetcher = (*fetch.MockClient)(nil)
